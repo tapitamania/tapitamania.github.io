@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Adivinar Colores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4e5ba;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 5px; /* Reducir margen inferior */
+            font-size: 20px; /* Tamaño del título más pequeño */
+        }
+
+        .fichas-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 250px; /* Limitar el ancho para que todo sea más compacto */
+            padding: 0 5px; /* Reducir espacio interno */
+        }
+
+        .tapa {
+            width: 40px; /* Reducir tamaño de las tapas */
+            height: 40px;
+            border-radius: 50%; /* Hacer las fichas circulares */
+            background-color: #333;
+            margin: 4px; /* Reducir márgenes entre tapas */
+            display: inline-block;
+            border: 2px solid #333;
+            flex-shrink: 0; /* Evitar que se encojan */
+            box-sizing: border-box; /* Asegurar que el borde no altere el tamaño */
+        }
+
+        .numeros {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 250px;
+            padding: 0 5px;
+            margin-top: 5px; /* Reducir margen superior */
+        }
+
+        .numero {
+            width: 40px; /* Alinear con el tamaño de las tapas */
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px; /* Reducir tamaño de los números */
+        }
+
+        #result {
+            margin-top: 5px; /* Reducir margen superior */
+            font-size: 14px; /* Reducir tamaño de texto */
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; /* Alinear mensajes de forma vertical */
+            height: 50px; /* Asignar un alto fijo más pequeño */
+        }
+
+        .emoji {
+            font-size: 30px; /* Reducir tamaño del emoji */
+            margin-right: 5px; /* Reducir margen entre el emoji y el texto */
+        }
+
+        button {
+            padding: 6px 12px; /* Reducir tamaño de los botones */
+            font-size: 12px; /* Reducir tamaño de fuente */
+            margin: 5px; /* Reducir margen entre botones */
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        .sortable-swap-highlight {
+            border: 2px dashed #9AB6F1;
+        }
+
+        .controls {
+            display: flex;
+            gap: 5px; /* Reducir espacio entre botones */
+        }
+
+        img {
+    width: 300px; /* Ajustar el ancho como desees */
+    height: auto; /* Mantener la relación de aspecto original */
+    margin-bottom: 0px; /* Reducir margen inferior */
+}
+
+
+        .result-message {
+            display: flex;
+            align-items: center;
+        }
+
+        .selector {
+            margin-bottom: 5px; /* Reducir margen inferior */
+            font-size: 12px; /* Reducir tamaño de texto en los menús */
+        }
+
+        .selectors-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 5px; /* Ajustar el margen inferior para más espacio */
+        }
+    </style>
+    <!-- Incluir Sortable.js desde CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <!-- Incluir Confetti.js desde CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <!-- Título -->
+    <h1>Adivina el orden de las tapitas</h1>
+
+    <!-- Menús de configuración -->
+    <div class="selectors-container">
+        <div class="selector">
+            <label for="fichaCount">Número de fichas:</label>
+            <select id="fichaCount" onchange="generateRandomColors()">
+                <option value="4">4 fichas</option>
+                <option value="5">5 fichas</option>
+            </select>
+        </div>
+
+        <div class="selector">
+            <label for="numberType">Selecciona el tipo de números:</label>
+            <select id="numberType" onchange="generateRandomColors()">
+                <option value="positivos">Positivos (1, 2, 3, 4)</option>
+                <option value="negativos">Negativos (-4, -3, -2, -1)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Imágenes y fichas -->
+    <img src="c.png" alt="Imagen superior">
+
+    <div class="fichas-container" id="tapas">
+        <!-- Las tapas de bebida se mostrarán aquí -->
+    </div>
+
+    <div class="numeros" id="numeros">
+        <!-- Los números se mostrarán aquí -->
+    </div>
+
+    <img src="d.png" alt="Imagen inferior">
+
+    <!-- Controles -->
+    <div class="controls">
+        <button onclick="checkOrder()">Comprobar Orden</button>
+        <button onclick="generateRandomColors()">Reiniciar Juego</button>
+    </div>
+
+    <!-- Resultados -->
+    <div id="result"></div>
+
+    <!-- Archivos de sonido -->
+    <audio id="sound-1" src="tienes_1_aciertos.mp3" preload="auto"></audio>
+    <audio id="sound-2" src="tienes_2_aciertos.mp3" preload="auto"></audio>
+    <audio id="sound-3" src="tienes_3_aciertos.mp3" preload="auto"></audio>
+    <audio id="sound-4" src="tienes_4_aciertos.mp3" preload="auto"></audio>
+    <audio id="sound-5" src="tienes_5_aciertos.mp3" preload="auto"></audio>
+    <audio id="fanfare" src="fanfarria.mp3" preload="auto"></audio>
+
+    <script>
+        // Mapeo de colores (usamos 5 colores)
+        const numberToColorMap = {
+            1: '#ff5454', // Rojo
+            2: '#823ef7', // Morado
+            3: '#4733ff', // Azul
+            4: '#ffffff',  // Blanco
+            5: '#ffcc00'   // Amarillo
+        };
+
+        // Mapas para números positivos y negativos
+        const positiveNumbers = [1, 2, 3, 4, 5];
+        const negativeNumbers = [-5, -4, -3, -2, -1];
+        let currentNumbers = positiveNumbers.slice(0, 4); // Por defecto: 4 números positivos
+        let winningSequence = [];
+        let sortable;
+
+        // Obtener el número de fichas
+        function getFichaCount() {
+            return parseInt(document.getElementById('fichaCount').value);
+        }
+
+        // Generar una secuencia aleatoria de números sin repetición
+        function generateRandomSequence() {
+            const numbers = [...currentNumbers];
+            return shuffleArray(numbers);
+        }
+
+        // Mezclar un array usando el algoritmo Fisher-Yates
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Asegurar que la secuencia inicial no tenga ningún acierto
+        function generateNonMatchingSequence(winningSequence) {
+            let initialSequence;
+            do {
+                initialSequence = shuffleArray([...winningSequence]);
+            } while (hasAnyMatch(initialSequence, winningSequence)); // Seguir mezclando hasta que no haya coincidencias
+            return initialSequence;
+        }
+
+        // Verificar si hay algún acierto (posición igual)
+        function hasAnyMatch(arr1, arr2) {
+            for (let i = 0; i < arr1.length; i++) {
+                if (arr1[i] === arr2[i]) {
+                    return true; // Hay al menos un acierto
+                }
+            }
+            return false;
+        }
+
+        // Actualizar el tipo de números basado en la selección
+        function updateNumberType() {
+            const numberType = document.getElementById('numberType').value;
+            const fichaCount = getFichaCount();
+            if (numberType === 'negativos') {
+                currentNumbers = negativeNumbers.slice(0, fichaCount);
+            } else {
+                currentNumbers = positiveNumbers.slice(0, fichaCount);
+            }
+            updateNumberDisplay(currentNumbers);
+        }
+
+        // Actualizar la visualización de los números
+        function updateNumberDisplay(numbers) {
+            const numberContainer = document.getElementById('numeros');
+            numberContainer.innerHTML = ''; // Limpiar números actuales
+            numbers.forEach(num => {
+                numberContainer.innerHTML += `<div class="numero">${num}</div>`;
+            });
+        }
+
+        // Generar los colores aleatorios para mostrar al usuario (sin aciertos)
+        function generateRandomColors() {
+            updateNumberType(); // Actualizar los números según la selección
+
+            // Limpiar el estado anterior
+            winningSequence = [];
+            document.getElementById('tapas').innerHTML = '';
+            document.getElementById('result').innerHTML = '';
+
+            // Generar una nueva secuencia ganadora (estado secreto)
+            winningSequence = generateRandomSequence();
+
+            // Generar una secuencia inicial que no tenga ningún acierto
+            const initialSequence = generateNonMatchingSequence(winningSequence);
+
+            for (let number of initialSequence) {
+                const color = numberToColorMap[Math.abs(number)]; // Obtener el color con el valor absoluto
+                document.getElementById('tapas').innerHTML += `<div class="tapa" data-number="${number}" style="background-color:${color}"></div>`;
+            }
+
+            // Inicializar Sortable.js si no está ya inicializado
+            if (!sortable) {
+                sortable = new Sortable(document.getElementById('tapas'), {
+                    animation: 150,
+                    swap: true,
+                    swapClass: "sortable-swap-highlight",
+                    onStart: function () {
+                        clearResult(); // Limpiar el resultado cuando el usuario empieza a arrastrar
+                    }
+                });
+            } else {
+                // Si ya está inicializado, solo actualizar
+                sortable.sort([]);
+            }
+        }
+
+        // Comprobar cuántos números están en la posición correcta
+        function checkOrder() {
+            const currentOrder = Array.from(document.getElementById('tapas').children)
+                                      .map(el => parseInt(el.getAttribute('data-number')));
+            const result = document.getElementById('result');
+            let correctPositions = 0;
+            let sumOfCorrectPositions = 0;
+
+            // Comparar la secuencia del usuario con la secuencia ganadora
+            for (let i = 0; i < winningSequence.length; i++) {
+                if (currentOrder[i] === winningSequence[i]) {
+                    correctPositions++;
+                    sumOfCorrectPositions += currentNumbers[i]; // Sumar las posiciones (usando números positivos o negativos)
+                }
+            }
+
+            // Reproducir el sonido según el número de aciertos
+            playSound(correctPositions);
+
+            // Mostrar el resultado con emoji y suma de posiciones
+            displayResult(correctPositions, sumOfCorrectPositions);
+
+            // Si se adivinan todos los colores, mostrar confeti y reproducir fanfarria
+            if (correctPositions === winningSequence.length) {
+                celebrate(); // Mostrar confeti
+                playFanfare(); // Reproducir fanfarria
+            }
+        }
+
+        // Función para mostrar el resultado con el emoji y suma de posiciones
+        function displayResult(correctPositions, sumOfCorrectPositions) {
+            const result = document.getElementById('result');
+            const emoji = correctPositions > 0 ? '😊' : '😢';
+            const aciertosMensaje = correctPositions === 1 ? `Tienes ${correctPositions} acierto` : `Tienes ${correctPositions} aciertos`;
+
+            // Mostrar la suma solo si hay aciertos
+            const sumaMensaje = correctPositions > 0 ? `<br><span>El valor de la suma de las posiciones de los aciertos es: ${sumOfCorrectPositions}</span>` : '';
+
+            result.innerHTML = `<div class="result-message"><span class="emoji">${emoji}</span><span>${aciertosMensaje}</span></div>${sumaMensaje}`;
+        }
+
+        // Función para reproducir el sonido correcto según el número de aciertos
+        function playSound(correctPositions) {
+            const sound = document.getElementById(`sound-${correctPositions}`);
+            if (sound) {
+                sound.play();
+            }
+        }
+
+        // Función para reproducir la fanfarria cuando se adivine la secuencia completa
+        function playFanfare() {
+            const fanfare = document.getElementById('fanfare');
+            if (fanfare) {
+                fanfare.play();
+            }
+        }
+
+        // Función para mostrar confeti
+        function celebrate() {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Función para limpiar el resultado
+        function clearResult() {
+            document.getElementById('result').innerHTML = '';
+        }
+
+        // Inicializar el juego al cargar la página
+        window.onload = generateRandomColors;
+    </script>
+</body>
+</html>
